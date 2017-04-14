@@ -30,8 +30,8 @@ function usage()
     echo "The script should _NOT_ be run as root. It will ask for";
     echo "password via sudo if something needs it.";
     echo "";
-    echo "Usage: ${0} -v version_to_build";
-    echo -e "-v\tVersion of $pkg to build. This version should be";
+    echo "Usage: ${0} [-v version_to_build] [-r release_version]";
+    echo -e "\n-v\tVersion of $pkg to build. This version should be";
     echo -e "  \tavailable upstream. Default: latest";
     echo -e "\n-r\tRPM release version. Use this field to specify if this is a"
     echo -e "  \tcustom version for your needs. For example, if you are"
