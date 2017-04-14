@@ -4,12 +4,15 @@
 # Some initializations.                   #
 ###########################################
 pkg='consul'
-pkg_version=''
+pkg_version='latest'
 pkg_release='1'
 isDebug=false;
 current_dir=$(dirname ${0})
 build_root=$(realpath $current_dir/rpmbuild)
 download_url_root='https://releases.hashicorp.com/consul'
+# available_versions will always be sorted because hashicorp publishes new versions on top.
+# This implies available_versions[0] will always be the latest version.
+available_versions=( $(curl --silent $download_url_root/ | grep -oP '(/\d\.\d\.\d/)?' | tr -d '/') )
 
 ###########################################
 # Functions                               #
@@ -29,17 +32,16 @@ function usage()
     echo "";
     echo "Usage: ${0} -v version_to_build";
     echo -e "-v\tVersion of $pkg to build. This version should be";
-    echo -e "  \tavailable upstream. See available versions below.";
+    echo -e "  \tavailable upstream. Default: latest";
     echo -e "\n-r\tRPM release version. Use this field to specify if this is a"
     echo -e "  \tcustom version for your needs. For example, if you are"
     echo -e "  \tbuilding this package for your company, you can set this"
     echo -e "  \tto company name. Default: 1";
     echo -e "-b\tPath that will contain RPM build tree. Default is current dir.";
+    echo -e "-l\tList available versions.";
     echo -e "\n-h\tShow this help message and exit.";
     echo -e "\n-d\tPrint debugging statements.";
     echo -e "\nExample: ${0} -v 0.8.0";
-    echo -e "\nAvailable versions:";
-    print_available_versions
 }
 
 function parse_command()
@@ -49,8 +51,8 @@ function parse_command()
         exit -4;
     fi
 
-    SHORT=v:r:b:hd
-    LONG=version:,release:,build_root:,help,debug
+    SHORT=v:r:b:lhd
+    LONG=version:,release:,build_root:,list,help,debug
     PARSED=$(getopt --options $SHORT --longoptions $LONG --name "$0" -- "$@")
     if [[ $? -ne 0 ]]; then
         # e.g. $? == 1
@@ -70,7 +72,11 @@ function parse_command()
                 shift
                 ;;
             -v|--version)
-                pkg_version="$2"
+                if [ "$2" == 'latest' ]; then
+                    pkg_version="${available_versions[0]}"
+                else
+                    pkg_version="$2"
+                fi
                 shift 2
                 ;;
             -r|--release)
@@ -81,6 +87,12 @@ function parse_command()
                 build_root="$2"
                 shift 2
                 ;;
+            -l|--list)
+                echo "Available versions:"
+                print_available_versions
+                exit 0
+                shift
+                ;;
             -h|--help)
                 usage
                 exit 0
@@ -90,7 +102,7 @@ function parse_command()
                 break
                 ;;
             *)
-                usage
+                echo -e "\nProgrammer has the dumbz."
                 exit 3
                 ;;
         esac
@@ -143,7 +155,8 @@ function validate_inputs()
 
 function print_available_versions()
 {
-    curl --silent $download_url_root | grep -oP '(/\d\.\d\.\d/)?' | tr -d '/'
+    # Reference: http://www.tldp.org/LDP/abs/html/arrays.html
+    echo ${available_versions[@]/%/,}
 }
 
 function setup_rpm_tree()
@@ -195,13 +208,12 @@ function download_and_verify()
             exit 4
         fi
     done
-
 }
 
 ##################
-perform_safety_checks
 # Pass all args of the script to the function.
 parse_command "$@"
+perform_safety_checks
 validate_inputs
 setup_rpm_tree
 download_and_verify
