@@ -44,6 +44,11 @@ function usage()
 
 function parse_command()
 {
+    if [ -z "$1" ]; then
+        usage;
+        exit -4;
+    fi
+
     SHORT=v:r:b:hd
     LONG=version:,release:,build_root:,help,debug
     PARSED=$(getopt --options $SHORT --longoptions $LONG --name "$0" -- "$@")
