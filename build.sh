@@ -37,8 +37,8 @@ function usage()
     echo -e "  \tcustom version for your needs. For example, if you are"
     echo -e "  \tbuilding this package for your company, you can set this"
     echo -e "  \tto company name. Default: 1";
-    echo -e "-b\tPath that will contain RPM build tree. Default is current dir.";
-    echo -e "-l\tList available versions.";
+    echo -e "\n-b\tPath that will contain RPM build tree. Default is current dir.";
+    echo -e "\n-l\tList available versions.";
     echo -e "\n-h\tShow this help message and exit.";
     echo -e "\n-d\tPrint debugging statements.";
     echo -e "\nExample: ${0} -v 0.8.0";
