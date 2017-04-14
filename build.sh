@@ -5,11 +5,11 @@
 ###########################################
 pkg='consul'
 pkg_version=''
-pkg_release=''
+pkg_release='1'
 isDebug=false;
 current_dir=$(dirname ${0})
-build_root=(realpath $current_dir/rpmbuild)
-download_url_root='https://releases.hashicorp.com/consul/'
+build_root=$(realpath $current_dir/rpmbuild)
+download_url_root='https://releases.hashicorp.com/consul'
 
 ###########################################
 # Functions                               #
@@ -33,7 +33,7 @@ function usage()
     echo -e "\n-r\tRPM release version. Use this field to specify if this is a"
     echo -e "  \tcustom version for your needs. For example, if you are"
     echo -e "  \tbuilding this package for your company, you can set this"
-    echo -e "  \tto company name.";
+    echo -e "  \tto company name. Default: 1";
     echo -e "-b\tPath that will contain RPM build tree. Default is current dir.";
     echo -e "\n-h\tShow this help message and exit.";
     echo -e "\n-d\tPrint debugging statements.";
@@ -164,29 +164,37 @@ function setup_rpm_tree()
 
 function download_and_verify()
 {
-    remote_dir="${pkg}_${pkg_version}"
     core_archive_name="${pkg}_${pkg_version}_linux_amd64.zip"
     ui_archive_name="${pkg}_${pkg_version}_web_ui.zip"
     checksum="${pkg}_${pkg_version}_SHA256SUMS"
     sources_dir="$build_root/SOURCES"
 
     for file in $core_archive_name $ui_archive_name $checksum; do
-        dl_url="$download_url_root/$remote_dir/$file"
+        dl_url="$download_url_root/$pkg_version/$file"
         print_debug_line "${FUNCNAME[0]} : Downloading $dl_url to $sources_dir/$file"
         wget --max-redirect=0 -O $sources_dir/$file $dl_url &>/dev/null
+
+        # Print a message if download leads to file of size 0.
+        if [ ! -s $sources_dir/$file ]; then
+            echo
+            echo "Failed to download $dl_url."
+            echo "Please verify if the link is accurate and network connectivity"
+            echo "is available."
+        fi
     done
 
-    if [ "$isDebug" = true ]; then
-        sha256sum --ignore-missing --check $sources_dir/$checksum
-    else
-        sha256sum --ignore-missing --quiet --check $sources_dir/$checksum
-    fi
-
-    if [ "$?" -gt 0 ]; then
-        echo -e "\nSeems like download has failed. :("
-        echo    "Please verify connectivity and rerun the script."
-        exit 5
-    fi
+    # CentOS 7 is shipping with old sha256sum that does not contain --ignore-missing.
+    # Calculate the checksum and then match it against the one in downloaded file.
+    for file in $core_archive_name $ui_archive_name; do
+        local_checksum=$(sha256sum $sources_dir/$file | cut -f 1 -d ' ')
+        published_checksum=$(grep $file $sources_dir/$checksum | cut -f 1 -d ' ')
+        print_debug_line "${FUNCNAME[0]} : $file local checksum = $local_checksum"
+        print_debug_line "${FUNCNAME[0]} : $file published checksum = $published_checksum"
+        if [ "$local_checksum" != "$published_checksum" ]; then
+            echo "Checksum did not match for $file."
+            exit 4
+        fi
+    done
 
 }
 
