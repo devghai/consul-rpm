@@ -133,13 +133,15 @@ function perform_safety_checks()
         exit 4
     fi
 
-    # Check if sha256sum is installed
-    which sha256sum &>/dev/null
-    if [ "$?" -gt 0 ]; then
-        echo "sha256sum is not installed. It is needed to verify if downloads are successful."
-        echo "Please install coreutils and rerun the script."
-        exit 4
-    fi
+    # Check if packages is installed
+    for dep in wget sha256sum; do
+        which $dep &>/dev/null
+        if [ "$?" -gt 0 ]; then
+            echo "sha256sum is not installed. It is needed to verify if downloads are successful."
+            echo "Please install $dep and rerun the script."
+            exit 4
+        fi
+    done
 }
 
 function validate_inputs()
