@@ -134,7 +134,7 @@ function perform_safety_checks()
     fi
 
     # Check if packages is installed
-    for dep in wget sha256sum; do
+    for dep in wget sha256sum rpmbuild; do
         which $dep &>/dev/null
         if [ "$?" -gt 0 ]; then
             echo "sha256sum is not installed. It is needed to verify if downloads are successful."
