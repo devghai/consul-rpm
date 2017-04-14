@@ -42,9 +42,9 @@ Build the RPM as a non-root user from your home directory:
     git clone <this_repo_url>
     ```
 
-* Install `rpmdevtools` and `mock`.
+* Install `rpmdevtools`.
     ```
-    sudo yum install rpmdevtools mock
+    sudo yum install rpmdevtools
     ```
 
 * Set up your `rpmbuild` directory tree.
@@ -60,7 +60,7 @@ Build the RPM as a non-root user from your home directory:
 
 * Download remote source files.
     ```
-    spectool -g -R rpmbuild/SPECS/consul.spec
+    spectool --get-files --sourcedir rpmbuild/SPECS/consul.spec
     ```
 
 * Spectool may fail if your distribution has an older version of cURL (CentOS
