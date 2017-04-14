@@ -1,34 +1,25 @@
-%if 0%{?_version:1}
-%define         _verstr      %{_version}
-%else
-%define         _verstr      0.8.0
-%endif
+# Spec file to build RPM for Consul and its web ui.
 
 Name:           consul
-Version:        %{_verstr}
-Release:        1%{?dist}
+Version:        %{pkg_version}
+Release:        %{pkg_release}%{?dist}
 Summary:        Consul is a tool for service discovery and configuration. Consul is distributed, highly available, and extremely scalable.
 
 Group:          System Environment/Daemons
 License:        MPLv2.0
 URL:            http://www.consul.io
-Source0:        https://releases.hashicorp.com/%{name}/%{version}/%{name}_%{version}_linux_amd64.zip
+Source0:        %{name}_%{pkg_version}_linux_amd64.zip
 Source1:        %{name}.sysconfig
 Source2:        %{name}.service
-Source3:        %{name}.init
-Source4:        https://releases.hashicorp.com/%{name}/%{version}/%{name}_%{version}_web_ui.zip
+Source4:        %{name}_%{pkg_version}_web_ui.zip
 Source5:        %{name}.json
 Source6:        %{name}-ui.json
 Source7:        %{name}.logrotate
-BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-
-%if 0%{?fedora} >= 14 || 0%{?rhel} >= 7
+BuildRoot:      %{buildroot}
+BuildArch:      amd64
 BuildRequires:  systemd-units
 Requires:       systemd
-%else
-Requires:       logrotate
-%endif
-Requires(pre): shadow-utils
+Requires(pre):  shadow-utils
 
 %package ui
 Summary: Consul Web UI
@@ -48,7 +39,10 @@ Consul provides several key features:
 Consul comes with support for a beautiful, functional web UI. The UI can be used for viewing all services and nodes, viewing all health checks and their current status, and for reading and setting key/value data. The UI automatically supports multi-datacenter.
 
 %prep
+
+# docs: https://docs.fedoraproject.org/en-US/Fedora_Draft_Documentation/0.1/html-single/RPM_Guide/index.html#id853841
 %setup -q -c -b 4
+%setup -q -c -b 0
 
 %install
 mkdir -p %{buildroot}/%{_bindir}
@@ -62,15 +56,8 @@ mkdir -p %{buildroot}/%{_sharedstatedir}/%{name}
 mkdir -p %{buildroot}/%{_datadir}/%{name}-ui
 cp -r index.html static %{buildroot}/%{_prefix}/share/%{name}-ui
 
-%if 0%{?fedora} >= 14 || 0%{?rhel} >= 7
 mkdir -p %{buildroot}/%{_unitdir}
 cp %{SOURCE2} %{buildroot}/%{_unitdir}/
-%else
-mkdir -p %{buildroot}/%{_initrddir}
-mkdir -p %{buildroot}/%{_sysconfdir}/logrotate.d
-cp %{SOURCE3} %{buildroot}/%{_initrddir}/consul
-cp %{SOURCE7} %{buildroot}/%{_sysconfdir}/logrotate.d/%{name}
-%endif
 
 %pre
 getent group consul >/dev/null || groupadd -r consul
@@ -79,7 +66,6 @@ getent passwd consul >/dev/null || \
     -c "consul.io user" consul
 exit 0
 
-%if 0%{?fedora} >= 14 || 0%{?rhel} >= 7
 %post
 %systemd_post %{name}.service
 
@@ -88,16 +74,6 @@ exit 0
 
 %postun
 %systemd_postun_with_restart %{name}.service
-%else
-%post
-/sbin/chkconfig --add %{name}
-
-%preun
-if [ "$1" = 0 ] ; then
-    /sbin/service %{name} stop >/dev/null 2>&1
-    /sbin/chkconfig --del %{name}
-fi
-%endif
 
 %clean
 rm -rf %{buildroot}
@@ -109,12 +85,7 @@ rm -rf %{buildroot}
 %attr(640, root, consul) %{_sysconfdir}/%{name}.d/consul.json-dist
 %dir %attr(750, consul, consul) %{_sharedstatedir}/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
-%if 0%{?fedora} >= 14 || 0%{?rhel} >= 7
 %{_unitdir}/%{name}.service
-%else
-%{_initrddir}/%{name}
-%{_sysconfdir}/logrotate.d/%{name}
-%endif
 %attr(755, root, root) %{_bindir}/consul
 
 %files ui
@@ -126,6 +97,10 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Fri Apr 14 2017 Dev <talk@devghai.com>
+- Remove SysV/Upstart support.
+- Replace manual packaging steps with a script.
+
 * Wed Apr 05 2017 mh <mh@immerda.ch>
 - Bump to 0.8.0
 - remove legacy location /etc/consul/
