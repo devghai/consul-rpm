@@ -14,6 +14,15 @@ download_url_root='https://releases.hashicorp.com/consul'
 # This implies available_versions[0] will always be the latest version.
 available_versions=( $(curl --silent $download_url_root/ | grep -oP '(/\d\.\d\.\d/)?' | tr -d '/') )
 
+# Array containing mapping of dependency binaries to the packages that contain them.
+# This is used in perform_safety_checks() to install missing packages.
+# To add a dependency, just add to this mapping.
+declare -A deps_bin_to_pkg
+deps_bin_to_pkg=(
+    ['wget']='wget'
+    ['rpmbuild']='rpm-build'
+    ['sha256sum']='coreutils'
+)
 ###########################################
 # Functions                               #
 ###########################################
@@ -128,26 +137,43 @@ function perform_safety_checks()
         exit 4
     fi
 
-    # Check if packages is installed
-    for dep in wget sha256sum rpmbuild; do
+    # Check if packages are installed
+    unavailable_packages=''
+    for dep in ${!deps_bin_to_pkg[@]}; do
         which $dep &>/dev/null
         if [ "$?" -gt 0 ]; then
-            echo "sha256sum is not installed. It is needed to verify if downloads are successful."
-            echo "Please install $dep and rerun the script."
-            exit 4
+            print_debug_line "${FUNCNAME[0]} : $dep is not installed."
+            unavailable_packages+="${deps_bin_to_pkg[$dep]} "
         fi
     done
+
+    # Install missing packages. Exit if installation is unsuccessful.
+    if [ -n "$unavailable_packages" ]; then
+        echo -e "\nFollowing packages need to be installed:\n$unavailable_packages"
+        echo    "Please enter the password for sudo (if prompted)"
+        sudo yum install -y $unavailable_packages
+
+        # Check if installation was successful.
+        if [ "$?" -ne 0 ]; then
+            echo -e "\nSome packages could not be installed successfully. Following command was run:"
+            echo -e "sudo yum install -y $unavailable_packages"
+            echo -e "\nPlease debug and rerun the script."
+            exit 4
+        fi
+    fi
 }
 
 function validate_inputs()
 {
-    if [[ "$pkg_version" =~ ^0\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Using version: $pkg_version"
-    else
-        echo "Invalid version format. Versions available for packaging:"
+    if [ "$pkg_version" == "latest" ]; then
+        pkg_version="${available_versions[0]}"
+    elif [[ ! "$pkg_version" =~ ^0\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Invalid version format in '$pkg_version'. Versions available for packaging:"
         print_available_versions
         exit 2
     fi
+
+    echo "Using version: $pkg_version"
 }
 
 function print_available_versions()
