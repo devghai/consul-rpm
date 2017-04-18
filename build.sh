@@ -6,7 +6,8 @@
 pkg='consul'
 pkg_version='latest'
 pkg_release='1'
-isDebug=false;
+isDebug=false
+build_consul_template=1
 current_dir=$(dirname ${0})
 build_root=$(realpath $current_dir/rpmbuild)
 download_url_root='https://releases.hashicorp.com/consul'
@@ -47,6 +48,7 @@ function usage()
     echo -e "  \tbuilding this package for your company, you can set this"
     echo -e "  \tto company name. Default: 1";
     echo -e "\n-b\tPath that will contain RPM build tree. Default is current dir.";
+    echo -e "\n-t\tAlso build consul-template RPM. Does not build by default.";
     echo -e "\n-l\tList available versions.";
     echo -e "\n-h\tShow this help message and exit.";
     echo -e "\n-d\tPrint debugging statements.";
@@ -55,8 +57,8 @@ function usage()
 
 function parse_command()
 {
-    SHORT=v:r:b:lhd
-    LONG=version:,release:,build_root:,list,help,debug
+    SHORT=v:r:b:lthd
+    LONG=version:,release:,build_root:,list,template,help,debug
     PARSED=$(getopt --options $SHORT --longoptions $LONG --name "$0" -- "$@")
     if [[ $? -ne 0 ]]; then
         # e.g. $? == 1
@@ -95,6 +97,10 @@ function parse_command()
                 echo "Available versions:"
                 print_available_versions
                 exit 0
+                shift
+                ;;
+            -t|--template)
+                build_consul_template=0
                 shift
                 ;;
             -h|--help)
@@ -142,9 +148,10 @@ function perform_safety_checks()
     for dep in ${!deps_bin_to_pkg[@]}; do
         which $dep &>/dev/null
         if [ "$?" -gt 0 ]; then
-            print_debug_line "${FUNCNAME[0]} : $dep is not installed."
+            print_debug_line "${FUNCNAME[0]} : '$dep' from '${deps_bin_to_pkg[$dep]}' is not installed."
             unavailable_packages+="${deps_bin_to_pkg[$dep]} "
         fi
+        print_debug_line "${FUNCNAME[0]} : $dep is available."
     done
 
     # Install missing packages. Exit if installation is unsuccessful.
@@ -244,3 +251,6 @@ download_and_verify
 # _topdir and _tmppath are magic rpm variables that can be defined in ~/.rpmmacros
 # For ease of reliable builds they are defined here on the command line.
 rpmbuild -ba --define="_topdir $build_root" --define="buildroot $build_root/BUILDROOT" --define="pkg_version $pkg_version" --define="rpm_release $pkg_release" $build_root/SPECS/$pkg.spec
+if [ "$build_consul_template" -eq "0" ]; then
+    rpmbuild -ba --define="_topdir $build_root" --define="buildroot $build_root/BUILDROOT" --define="pkg_version $pkg_version" --define="rpm_release $pkg_release" $build_root/SPECS/$pkg-template.spec
+fi
