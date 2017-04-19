@@ -215,8 +215,9 @@ function download_and_verify()
         print_debug_line "${FUNCNAME[0]} : Downloading $dl_url to $sources_dir/$file"
         wget --max-redirect=0 -O $sources_dir/$file $dl_url &>/dev/null
 
-        # Print a message if download leads to file of size 0.
-        if [ ! -s $sources_dir/$file ]; then
+        # Print a message if download leads to file of size 0, or wget exits with
+        # non-zero exit code
+        if [ ! -s $sources_dir/$file -o "$?" -ne 0 ]; then
             echo
             echo "Failed to download $dl_url."
             echo "Please verify if the link is accurate and network connectivity"
