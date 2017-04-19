@@ -205,6 +205,7 @@ function download_and_verify()
     ui_archive_name="${pkg}_${pkg_version}_web_ui.zip"
     checksum="${pkg}_${pkg_version}_SHA256SUMS"
     sources_dir="$build_root/SOURCES"
+    failed_download='false'
 
     for file in $core_archive_name $ui_archive_name $checksum; do
         # Skip download if file already exists
@@ -220,8 +221,14 @@ function download_and_verify()
             echo "Failed to download $dl_url."
             echo "Please verify if the link is accurate and network connectivity"
             echo "is available."
+            failed_download='true'
         fi
     done
+
+    if [ "$failed_download" == 'true' ]; then
+        echo -e "\nDownload(s) failed :(. Exiting.\n"
+        exit 4
+    fi
 
     # CentOS 7 is shipping with old sha256sum that does not contain --ignore-missing.
     # Calculate the checksum and then match it against the one in downloaded file.
