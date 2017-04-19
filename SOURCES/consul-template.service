@@ -7,7 +7,7 @@ Wants=network-online.target
 [Service]
 User=consul-template
 Group=consul-template
-EnvironmentFile=-/etc/sysconfig/consul-template
+EnvironmentFile=/etc/sysconfig/consul-template
 ExecStart=/usr/bin/consul-template $CMD_OPTS
 ExecReload=/bin/kill -HUP $MAINPID
 KillSignal=SIGINT
