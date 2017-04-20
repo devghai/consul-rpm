@@ -255,4 +255,5 @@ download_and_verify
 # Now that the sources are downloaded and verified we can actually make the RPM.
 # _topdir and _tmppath are magic rpm variables that can be defined in ~/.rpmmacros
 # For ease of reliable builds they are defined here on the command line.
+print_debug_line "Starting rpmbuild."
 rpmbuild -ba --define="_topdir $build_root" --define="buildroot $build_root/BUILDROOT" --define="pkg_version $pkg_version" --define="rpm_release $pkg_release" $build_root/SPECS/$pkg.spec
