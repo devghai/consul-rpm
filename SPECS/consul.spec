@@ -1,8 +1,9 @@
 # Spec file to build RPM for Consul and its web ui.
+# Docs for scriptlets/macros: https://fedoraproject.org/wiki/Packaging:Scriptlets?rd=Packaging:ScriptletSnippets
 
 Name:           consul
 Version:        %{pkg_version}
-Release:        %{pkg_release}%{?dist}
+Release:        %{rpm_release}%{?dist}
 Summary:        Consul is a tool for service discovery and configuration. Consul is distributed, highly available, and extremely scalable.
 
 Group:          System Environment/Daemons
@@ -16,15 +17,15 @@ Source5:        %{name}.json
 Source6:        %{name}-ui.json
 Source7:        %{name}.logrotate
 BuildRoot:      %{buildroot}
-BuildArch:      amd64
+BuildArch:      x86_64
 BuildRequires:  systemd-units
 Requires:       systemd
 Requires(pre):  shadow-utils
 
 %package ui
-Summary: Consul Web UI
-Requires: consul = %{version}
-BuildArch: noarch
+Summary:        Consul Web UI
+Requires:       consul = %{pkg_version}
+BuildArch:      noarch
 
 %description
 Consul is a tool for service discovery and configuration. Consul is distributed, highly available, and extremely scalable.
@@ -42,13 +43,12 @@ Consul comes with support for a beautiful, functional web UI. The UI can be used
 
 # docs: https://docs.fedoraproject.org/en-US/Fedora_Draft_Documentation/0.1/html-single/RPM_Guide/index.html#id853841
 %setup -q -c -b 4
-%setup -q -c -b 0
 
 %install
 mkdir -p %{buildroot}/%{_bindir}
 cp consul %{buildroot}/%{_bindir}
 mkdir -p %{buildroot}/%{_sysconfdir}/%{name}.d
-cp %{SOURCE5} %{buildroot}/%{_sysconfdir}/%{name}.d/consul.json-dist
+cp %{SOURCE5} %{buildroot}/%{_sysconfdir}/%{name}.d/consul.json
 cp %{SOURCE6} %{buildroot}/%{_sysconfdir}/%{name}.d/
 mkdir -p %{buildroot}/%{_sysconfdir}/sysconfig
 cp %{SOURCE1} %{buildroot}/%{_sysconfdir}/sysconfig/%{name}
@@ -78,11 +78,11 @@ exit 0
 %clean
 rm -rf %{buildroot}
 
-
+# Docs: https://fedoraproject.org/wiki/How_to_create_an_RPM_package#.25files_section
 %files
 %defattr(-,root,root,-)
 %dir %attr(750, root, consul) %{_sysconfdir}/%{name}.d
-%attr(640, root, consul) %{_sysconfdir}/%{name}.d/consul.json-dist
+%config(noreplace) %attr(640, root, consul) %{_sysconfdir}/%{name}.d/consul.json
 %dir %attr(750, consul, consul) %{_sharedstatedir}/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %{_unitdir}/%{name}.service
@@ -100,6 +100,7 @@ rm -rf %{buildroot}
 * Fri Apr 14 2017 Dev <talk@devghai.com>
 - Remove SysV/Upstart support.
 - Replace manual packaging steps with a script.
+- Remove .json-dist. Backup on upgrade.
 
 * Wed Apr 05 2017 mh <mh@immerda.ch>
 - Bump to 0.8.0
