@@ -166,10 +166,22 @@ function perform_safety_checks()
 
 function validate_inputs()
 {
+    # Check if correct version has been supplied. Otherwise downloads will fail.
+    is_version_valid='false'
     if [ "$pkg_version" == "latest" ]; then
         pkg_version="${available_versions[0]}"
-    elif [[ ! "$pkg_version" =~ ^0\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Invalid version format in '$pkg_version'. Versions available for packaging:"
+        is_version_valid='true'
+    else
+        for available_version in ${available_versions[@]}; do
+            if [ "$available_version" == "$pkg_version" ]; then
+                is_version_valid='true'
+                break
+            fi
+        done
+    fi
+
+    if [ "$is_version_valid" == 'false' ]; then
+        echo "'$pkg_version' of $pkg is not available upstream. Versions available for packaging:"
         print_available_versions
         exit 2
     fi
