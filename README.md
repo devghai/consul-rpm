@@ -8,13 +8,7 @@ Tries to follow the [packaging guidelines](https://fedoraproject.org/wiki/Packag
 * Sysconfig: `/etc/sysconfig/consul`
 * WebUI: `/usr/share/consul/`
 
-# Using
-
-Create the RPMs using one of the techniques outlined in the Build section below.
-
-## Pre-built packages
-
-Pre-built packages are maintained via the [Fedora Copr](https://copr.fedoraproject.org/coprs/) system. For more information, please see the [duritong/consul](https://copr.fedoraproject.org/coprs/duritong/consul/) repository on Copr.
+Only supports SystemD.
 
 # Build
 
@@ -27,11 +21,7 @@ Each method ultimately does the same thing - pick the one that is most comfortab
 
 ### Version
 
-The version number is hardcoded into the SPEC, however should you so choose, it can be set explicitly by passing an argument to `rpmbuild` directly:
-
-```
-$ rpmbuild --define "_version 0.6.3"
-```
+Use `build.sh -l` to see versions available for packaging. Script queries consul download URL to find available versions... so will need a network connection and `curl`.
 
 ## Manual
 
@@ -42,39 +32,16 @@ Build the RPM as a non-root user from your home directory:
     git clone <this_repo_url>
     ```
 
-* Install `rpmdevtools`.
+* Use `build.sh` to build the RPM. `build.sh -h` tells you all options that are available, along with respective default settings. It will build the latest version in current directory by default. Examples:
     ```
-    sudo yum install rpmdevtools
-    ```
+    # Build version 0.7.2
+    build.sh -v 0.7.2
 
-* Set up your `rpmbuild` directory tree.
-    ```
-    rpmdev-setuptree
-    ```
+    # Build version 0.7.2 with RPM tree located in /tmp folder
+    build.sh -v 0.7.2 -b /tmp
 
-* Link the spec file and sources.
-    ```
-    ln -s $HOME/consul-rpm/SPECS/consul.spec $HOME/rpmbuild/SPECS/
-    find $HOME/consul-rpm/SOURCES -type f -exec ln -s {} $HOME/rpmbuild/SOURCES/ \;
-    ```
-
-* Download remote source files.
-    ```
-    spectool --get-files --sourcedir rpmbuild/SPECS/consul.spec
-    ```
-
-* Spectool may fail if your distribution has an older version of cURL (CentOS
-  6.x, for example) - if so, use Wget instead.
-    ```
-    VER=`grep Version rpmbuild/SPECS/consul.spec | awk '{print $2}'`
-    URL='https://dl.bintray.com/mitchellh/consul'
-    wget $URL/consul_${VER}_linux_amd64.zip -O $HOME/rpmbuild/SOURCES/consul_${VER}_linux_amd64.zip
-    wget $URL/consul_${VER}_web_ui.zip -O $HOME/rpmbuild/SOURCES/consul_${VER}_web_ui.zip
-    ```
-
-* Build the RPM.
-    ```
-    rpmbuild -ba rpmbuild/SPECS/consul.spec
+    # Build version 0.7.2 with RPM tree located in /tmp folder and set release version 'example'
+    build.sh -v 0.7.2 -b /tmp -r example
     ```
 
 ## Vagrant
@@ -117,7 +84,6 @@ If you prefer building it with Docker:
 Three RPMs:
 - consul server
 - consul web UI
-- consul-template
 
 # Run
 
@@ -140,10 +106,9 @@ sample configs are provided.
 
 See the [consul.io](http://www.consul.io) website.
 
-## Backwards compatibility
+# TODO
 
-Earlier verisons of this package used `/etc/consul/` as the default
+1. Earlier verisons of this package used `/etc/consul/` as the default
 configuration directory. As of 0.7.2, the default directory was changed to
-`/etc/consul.d/` in order to align with the offcial Consul docuemntation. In
-order to avoid breaking existing installations during upgrade, *both* of the
-directories will be created during package install.
+`/etc/consul.d/`. Need to add this in order to align with the offcial Consul docuemntation.
+2. Logrotate config.
