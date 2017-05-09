@@ -81,7 +81,7 @@ If you prefer building it with Docker:
 
 # Result
 
-Three RPMs:
+Two RPMs:
 - consul server
 - consul web UI
 
