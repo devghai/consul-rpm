@@ -91,8 +91,11 @@ Two RPMs:
 * Put config files in `/etc/consul.d/`.
 * Change command line arguments to consul in `/etc/sysconfig/consul`.
   * Add `-bootstrap` **only** if this is the first server and instance.
-* Start the service and tail the logs `systemctl start consul.service` and `journalctl -f`.
-  * To enable at reboot `systemctl enable consul.service`.
+* Start the service
+    `systemctl start consul.service`
+* Tail the logs
+    `journalctl -xef _SYSTEMD_UNIT=consul.service`.
+* To enable at reboot `systemctl enable consul.service`.
 * Consul may complain about the `GOMAXPROCS` setting. This is safe to ignore;
   however, the warning can be supressed by uncommenting the appropriate line in
   `/etc/sysconfig/consul`.
