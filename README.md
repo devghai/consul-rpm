@@ -102,8 +102,7 @@ Two RPMs:
 
 ## Config
 
-Config files are loaded in lexicographical order from the `config-dir`. Some
-sample configs are provided.
+Config files are loaded in lexicographical order from the `config-dir`.
 
 # More info
 
