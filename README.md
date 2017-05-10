@@ -133,3 +133,4 @@ See the [consul.io](http://www.consul.io) website.
 1. Earlier verisons of this package used `/etc/consul/` as the default
 configuration directory. As of 0.7.2, the default directory was changed to
 `/etc/consul.d/`. Need to add this in order to align with the offcial Consul docuemntation.
+2. Follow same patterns for logging and env variables for consul-template as they are being done for consul.
