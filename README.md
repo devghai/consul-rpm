@@ -90,23 +90,32 @@ Two RPMs:
 
 * Install the RPM.
 * Reload SystemD daemon
+    ```
     systemctl daemon-reload
-
+    ```
 * Restart RSyslog if you want logs to be written to /var/log/consul/consul.log
+    ```
     systemctl restart rsyslog.service
-
+    ```
 * Put config files in `/etc/consul.d/`.
 * Change command line arguments to consul in `/usr/lib/systemd/system/consul.service.d/consul.env.conf`.
   * Add `-bootstrap` **only** if this is the first server and instance.
 * Start the service
+    ```
     systemctl start consul.service
-
+    ```
 * Tail the logs
+    ```
     journalctl -xef _SYSTEMD_UNIT=consul.service
-
+    ```
+    or
+    ```
+    tail -f /var/log/consul/consul.log
+    ```
 * To enable at reboot
+    ```
     systemctl enable consul.service
-
+    ```
 * Consul may complain about the `GOMAXPROCS` setting. This is safe to ignore;
   however, the warning can be supressed by uncommenting the appropriate line in
   `/usr/lib/systemd/system/consul.service.d/consul.env.conf`.
