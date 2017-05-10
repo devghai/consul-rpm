@@ -1,5 +1,5 @@
-/var/log/consul {
-    daily
+/var/log/consul/consul.log {
+    size 10M
     missingok
     rotate 7
     compress

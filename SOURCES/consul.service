@@ -7,8 +7,10 @@ Wants=network-online.target
 [Service]
 User=consul
 Group=consul
-EnvironmentFile=/etc/sysconfig/consul
-ExecStart=/usr/bin/consul $CMD_OPTS
+ExecStart=/usr/bin/consul ${MODE} -config-dir=${CONF_DIR} -data-dir=${DATA_DIR} ${CMD_OPTS}
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=consul
 ExecReload=/bin/kill -HUP $MAINPID
 KillSignal=SIGINT
 

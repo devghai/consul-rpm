@@ -10,16 +10,17 @@ Group:          System Environment/Daemons
 License:        MPLv2.0
 URL:            http://www.consul.io
 Source0:        %{name}_%{pkg_version}_linux_amd64.zip
-Source1:        %{name}.sysconfig
+Source1:        %{name}.env.conf
 Source2:        %{name}.service
 Source4:        %{name}_%{pkg_version}_web_ui.zip
 Source5:        %{name}.json
 Source6:        %{name}-ui.json
 Source7:        %{name}.logrotate
+Source8:        %{name}.rsyslog.conf
 BuildRoot:      %{buildroot}
 BuildArch:      x86_64
 BuildRequires:  systemd-units
-Requires:       systemd
+Requires:       systemd, logrotate, rsyslog > 7.2
 Requires(pre):  shadow-utils
 
 %package ui
@@ -45,19 +46,38 @@ Consul comes with support for a beautiful, functional web UI. The UI can be used
 %setup -q -c -b 4
 
 %install
+# Binary
 mkdir -p %{buildroot}/%{_bindir}
 cp consul %{buildroot}/%{_bindir}
+
+# JSON Configs
 mkdir -p %{buildroot}/%{_sysconfdir}/%{name}.d
 cp %{SOURCE5} %{buildroot}/%{_sysconfdir}/%{name}.d/consul.json
 cp %{SOURCE6} %{buildroot}/%{_sysconfdir}/%{name}.d/
-mkdir -p %{buildroot}/%{_sysconfdir}/sysconfig
-cp %{SOURCE1} %{buildroot}/%{_sysconfdir}/sysconfig/%{name}
+
+# Data directories
 mkdir -p %{buildroot}/%{_sharedstatedir}/%{name}
 mkdir -p %{buildroot}/%{_datadir}/%{name}-ui
 cp -r index.html static %{buildroot}/%{_prefix}/share/%{name}-ui
 
+# Directory for storing log files.
+mkdir -p %{buildroot}/%{_localstatedir}/log/%{name}
+
+# Logrotate config
+mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d/
+cp %{SOURCE7} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}.conf
+
+# RSyslog config to enable writing to a file.
+mkdir -p %{buildroot}%{_sysconfdir}/rsyslog.d/
+cp %{SOURCE8} %{buildroot}%{_sysconfdir}/rsyslog.d/%{name}.conf
+
+# SystemD Unit definition.
 mkdir -p %{buildroot}/%{_unitdir}
 cp %{SOURCE2} %{buildroot}/%{_unitdir}/
+
+# Environment settings to go alongside unit file.
+mkdir -p %{buildroot}/%{_unitdir}/%{name}.service.d
+cp %{SOURCE1} %{buildroot}/%{_unitdir}/%{name}.service.d/%{name}.env.conf
 
 %pre
 getent group consul >/dev/null || groupadd -r consul
@@ -67,7 +87,20 @@ getent passwd consul >/dev/null || \
 exit 0
 
 %post
+# SystemD related scriptlets: https://fedoraproject.org/wiki/Packaging:Scriptlets?rd=Packaging:ScriptletSnippets#Systemd
+# https://github.com/systemd/systemd/blob/master/src/core/macros.systemd.in
 %systemd_post %{name}.service
+
+echo "NOTES ############################################################################"
+echo "Please restart RSyslog so that logs are written to %{_localstatedir}/log/%{name}:
+echo "    systemctl restart rsyslog.service"
+echo "To have %{name} start automatically on boot:
+echo "    systemctl enable %{name}.service"
+echo "Start %{name}:"
+echo "    systemctl daemon-reload"
+echo "    systemctl start %{name}.service"
+echo "##################################################################################"
+echo
 
 %preun
 %systemd_preun %{name}.service
@@ -78,25 +111,33 @@ exit 0
 %clean
 rm -rf %{buildroot}
 
-# Docs: https://fedoraproject.org/wiki/How_to_create_an_RPM_package#.25files_section
+# Docs:
+# https://fedoraproject.org/wiki/How_to_create_an_RPM_package#.25files_section
+# https://fedoraproject.org/wiki/Packaging:Guidelines#Logrotate_config_file
 %files
 %defattr(-,root,root,-)
-%dir %attr(750, root, consul) %{_sysconfdir}/%{name}.d
-%config(noreplace) %attr(640, root, consul) %{_sysconfdir}/%{name}.d/consul.json
-%dir %attr(750, consul, consul) %{_sharedstatedir}/%{name}
-%config(noreplace) %{_sysconfdir}/sysconfig/%{name}
-%{_unitdir}/%{name}.service
 %attr(755, root, root) %{_bindir}/consul
+%config(noreplace) %attr(640, root, consul) %{_sysconfdir}/%{name}.d/consul.json
+%config(noreplace) %attr(644, root, root) %{_sysconfdir}/logrotate.d/%{name}.conf
+%config(noreplace) %attr(644, root, root) %{_sysconfdir}/rsyslog.d/%{name}.conf
+%config(noreplace) %{_unitdir}/%{name}.service.d/%{name}.env.conf
+
+# Directory for logs. Renders to /var/log/consul
+%dir %attr(750, consul, consul) %{_localstatedir}/log/%{name}
+%dir %attr(750, consul, consul) %{_sharedstatedir}/%{name}
+%dir %attr(750, root, consul) %{_sysconfdir}/%{name}.d
+%{_unitdir}/%{name}.service
 
 %files ui
+%attr(640, root, consul) %{_sysconfdir}/%{name}.d/%{name}-ui.json
 %config(noreplace) %attr(-, root, consul) %{_prefix}/share/%{name}-ui
-%attr(640, root, consul) %{_sysconfdir}/%{name}.d/consul-ui.json
-
 
 %doc
 
-
 %changelog
+* Tue May 09 2017 Dev <talk@devghai.com>
+- Adding dependency on logrotate.
+
 * Fri Apr 14 2017 Dev <talk@devghai.com>
 - Remove SysV/Upstart support.
 - Replace manual packaging steps with a script.
