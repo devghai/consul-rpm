@@ -4,8 +4,9 @@ Tries to follow the [packaging guidelines](https://fedoraproject.org/wiki/Packag
 
 * Binary: `/usr/bin/consul`
 * Config: `/etc/consul.d/`
+* Configs to manage logs: `/etc/logrotate.d/consul.conf`, `/etc/rsyslog.d/consul.conf`
 * Shared state: `/var/lib/consul/`
-* Sysconfig: `/etc/sysconfig/consul`
+* Environment config variables: `/usr/lib/systemd/system/consul.service.d/consul.env.conf`
 * WebUI: `/usr/share/consul/`
 
 Only supports SystemD.
@@ -88,8 +89,12 @@ Two RPMs:
 # Run
 
 * Install the RPM.
+* Reload SystemD daemon
+    `systemctl daemon-reload`
+* Restart RSyslog if you want logs to be written to /var/log/consul/consul.log
+    `systemctl restart rsyslog.service`
 * Put config files in `/etc/consul.d/`.
-* Change command line arguments to consul in `/etc/sysconfig/consul`.
+* Change command line arguments to consul in `/usr/lib/systemd/system/consul.service.d/consul.env.conf`.
   * Add `-bootstrap` **only** if this is the first server and instance.
 * Start the service
     `systemctl start consul.service`
@@ -98,7 +103,7 @@ Two RPMs:
 * To enable at reboot `systemctl enable consul.service`.
 * Consul may complain about the `GOMAXPROCS` setting. This is safe to ignore;
   however, the warning can be supressed by uncommenting the appropriate line in
-  `/etc/sysconfig/consul`.
+  `/usr/lib/systemd/system/consul.service.d/consul.env.conf`.
 
 ## Config
 
@@ -113,4 +118,3 @@ See the [consul.io](http://www.consul.io) website.
 1. Earlier verisons of this package used `/etc/consul/` as the default
 configuration directory. As of 0.7.2, the default directory was changed to
 `/etc/consul.d/`. Need to add this in order to align with the offcial Consul docuemntation.
-2. Logrotate config.
