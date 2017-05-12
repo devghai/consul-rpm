@@ -91,10 +91,11 @@ exit 0
 # https://github.com/systemd/systemd/blob/master/src/core/macros.systemd.in
 %systemd_post %{name}.service
 
+echo
 echo "NOTES ############################################################################"
-echo "Please restart RSyslog so that logs are written to %{_localstatedir}/log/%{name}:
+echo "Please restart RSyslog so that logs are written to %{_localstatedir}/log/%{name}:"
 echo "    systemctl restart rsyslog.service"
-echo "To have %{name} start automatically on boot:
+echo "To have %{name} start automatically on boot:"
 echo "    systemctl enable %{name}.service"
 echo "Start %{name}:"
 echo "    systemctl daemon-reload"
