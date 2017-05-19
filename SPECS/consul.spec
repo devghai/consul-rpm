@@ -81,8 +81,10 @@ cp %{SOURCE1} %{buildroot}/%{_unitdir}/%{name}.service.d/%{name}.env.conf
 
 %pre
 getent group consul >/dev/null || groupadd -r consul
+# Setting shell for consul user to /sbin/nologin causes script based health checks to fail.
+# See https://github.com/hashicorp/consul/issues/2999
 getent passwd consul >/dev/null || \
-    useradd -r -g consul -d /var/lib/consul -s /sbin/nologin \
+    useradd -r -g consul -d /var/lib/consul -s /bin/sh \
     -c "consul.io user" consul
 exit 0
 
