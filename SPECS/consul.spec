@@ -138,6 +138,15 @@ rm -rf %{buildroot}
 %doc
 
 %changelog
+* Tue May 30 2017 Dev <talk@devghai.com>
+- Updating SystemD service definition to restart on failure.
+
+* Tue May 09 2017 Dev <talk@devghai.com>
+- Adding dependency on logrotate.
+
+* Tue May 09 2017 Dev <talk@devghai.com>
+- Adding dependency on logrotate.
+
 * Tue May 09 2017 Dev <talk@devghai.com>
 - Adding dependency on logrotate.
 
