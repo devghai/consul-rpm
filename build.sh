@@ -214,12 +214,11 @@ function setup_rpm_tree()
 function download_and_verify()
 {
     core_archive_name="${pkg}_${pkg_version}_linux_amd64.zip"
-    ui_archive_name="${pkg}_${pkg_version}_web_ui.zip"
     checksum="${pkg}_${pkg_version}_SHA256SUMS"
     sources_dir="$build_root/SOURCES"
     failed_download='false'
 
-    for file in $core_archive_name $ui_archive_name $checksum; do
+    for file in $core_archive_name $checksum; do
         # Skip download if file already exists
         [ -f "$sources_dir/$file" ] && continue
 
@@ -245,16 +244,14 @@ function download_and_verify()
 
     # CentOS 7 is shipping with old sha256sum that does not contain --ignore-missing.
     # Calculate the checksum and then match it against the one in downloaded file.
-    for file in $core_archive_name $ui_archive_name; do
-        local_checksum=$(sha256sum $sources_dir/$file | cut -f 1 -d ' ')
-        published_checksum=$(grep $file $sources_dir/$checksum | cut -f 1 -d ' ')
-        print_debug_line "${FUNCNAME[0]} : $file local checksum = $local_checksum"
-        print_debug_line "${FUNCNAME[0]} : $file published checksum = $published_checksum"
-        if [ "$local_checksum" != "$published_checksum" ]; then
-            echo "Checksum did not match for $file."
-            exit 4
-        fi
-    done
+    local_checksum=$(sha256sum $sources_dir/$core_archive_name | cut -f 1 -d ' ')
+    published_checksum=$(grep $core_archive_name $sources_dir/$checksum | cut -f 1 -d ' ')
+    print_debug_line "${FUNCNAME[0]} : $core_archive_name local checksum = $local_checksum"
+    print_debug_line "${FUNCNAME[0]} : $core_archive_name published checksum = $published_checksum"
+    if [ "$local_checksum" != "$published_checksum" ]; then
+        echo "Checksum did not match for $core_archive_name."
+        exit 4
+    fi
 }
 
 ##################

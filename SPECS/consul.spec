@@ -12,11 +12,9 @@ URL:            http://www.consul.io
 Source0:        %{name}_%{pkg_version}_linux_amd64.zip
 Source1:        %{name}.env.conf
 Source2:        %{name}.service
-Source4:        %{name}_%{pkg_version}_web_ui.zip
-Source5:        %{name}.json
-Source6:        %{name}-ui.json
-Source7:        %{name}.logrotate
-Source8:        %{name}.rsyslog.conf
+Source3:        %{name}.json
+Source4:        %{name}.logrotate
+Source5:        %{name}.rsyslog.conf
 BuildRoot:      %{buildroot}
 BuildArch:      x86_64
 BuildRequires:  systemd-units
@@ -43,7 +41,7 @@ Consul comes with support for a beautiful, functional web UI. The UI can be used
 %prep
 
 # docs: https://docs.fedoraproject.org/en-US/Fedora_Draft_Documentation/0.1/html-single/RPM_Guide/index.html#id853841
-%setup -q -c -b 4
+%setup -q -c
 
 %install
 # Binary
@@ -52,24 +50,21 @@ cp consul %{buildroot}/%{_bindir}
 
 # JSON Configs
 mkdir -p %{buildroot}/%{_sysconfdir}/%{name}.d
-cp %{SOURCE5} %{buildroot}/%{_sysconfdir}/%{name}.d/consul.json
-cp %{SOURCE6} %{buildroot}/%{_sysconfdir}/%{name}.d/
+cp %{SOURCE3} %{buildroot}/%{_sysconfdir}/%{name}.d/consul.json
 
 # Data directories
 mkdir -p %{buildroot}/%{_sharedstatedir}/%{name}
-mkdir -p %{buildroot}/%{_datadir}/%{name}-ui
-cp -r index.html static %{buildroot}/%{_prefix}/share/%{name}-ui
 
 # Directory for storing log files.
 mkdir -p %{buildroot}/%{_localstatedir}/log/%{name}
 
 # Logrotate config
 mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d/
-cp %{SOURCE7} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}.conf
+cp %{SOURCE4} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}.conf
 
 # RSyslog config to enable writing to a file.
 mkdir -p %{buildroot}%{_sysconfdir}/rsyslog.d/
-cp %{SOURCE8} %{buildroot}%{_sysconfdir}/rsyslog.d/%{name}.conf
+cp %{SOURCE5} %{buildroot}%{_sysconfdir}/rsyslog.d/%{name}.conf
 
 # SystemD Unit definition.
 mkdir -p %{buildroot}/%{_unitdir}
@@ -84,7 +79,7 @@ getent group consul >/dev/null || groupadd -r consul
 # Setting shell for consul user to /sbin/nologin causes script based health checks to fail.
 # See https://github.com/hashicorp/consul/issues/2999
 getent passwd consul >/dev/null || \
-    useradd -r -g consul -d /var/lib/consul -s /bin/sh \
+    useradd -r -g consul -d /var/lib/consul -s /sbin/nologin \
     -c "consul.io user" consul
 exit 0
 
@@ -131,21 +126,15 @@ rm -rf %{buildroot}
 %dir %attr(750, root, consul) %{_sysconfdir}/%{name}.d
 %{_unitdir}/%{name}.service
 
-%files ui
-%attr(640, root, consul) %{_sysconfdir}/%{name}.d/%{name}-ui.json
-%config(noreplace) %attr(-, root, consul) %{_prefix}/share/%{name}-ui
-
 %doc
 
 %changelog
+* Fri Jul 21 2017 Dev <talk@devghai.com>
+- Removing shell for consul user as v0.9.0 introduces disable-script-checks config.
+- Removing separate UI packaging code as 0.9.0 no longer supports it.
+
 * Tue May 30 2017 Dev <talk@devghai.com>
 - Updating SystemD service definition to restart on failure.
-
-* Tue May 09 2017 Dev <talk@devghai.com>
-- Adding dependency on logrotate.
-
-* Tue May 09 2017 Dev <talk@devghai.com>
-- Adding dependency on logrotate.
 
 * Tue May 09 2017 Dev <talk@devghai.com>
 - Adding dependency on logrotate.
