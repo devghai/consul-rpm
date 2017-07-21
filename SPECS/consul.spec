@@ -19,7 +19,7 @@ Source7:        %{name}.logrotate
 Source8:        %{name}.rsyslog.conf
 BuildRoot:      %{buildroot}
 BuildArch:      x86_64
-BuildRequires:  systemd-units
+BuildRequires:  systemd-units, coreutils >= 7
 Requires:       systemd, logrotate, rsyslog > 7.2
 Requires(pre):  shadow-utils
 
@@ -50,10 +50,17 @@ Consul comes with support for a beautiful, functional web UI. The UI can be used
 mkdir -p %{buildroot}/%{_bindir}
 cp consul %{buildroot}/%{_bindir}
 
+# Config dir
+conf_dir='%{buildroot}/%{_sysconfdir}/%{name}.d'
+# set config dir to /etc/consul if version is less than 0.7.2
+smaller_ver=$(echo -e "%{pkg_version}\n0.7.2" | sort --version-sort | head -n1)
+[  "%{pkg_version}" = "$smaller_ver" ] && conf_dir='%{buildroot}/%{_sysconfdir}/%{name}'
+mkdir -p $conf_dir
+
 # JSON Configs
-mkdir -p %{buildroot}/%{_sysconfdir}/%{name}.d
-cp %{SOURCE5} %{buildroot}/%{_sysconfdir}/%{name}.d/consul.json
-cp %{SOURCE6} %{buildroot}/%{_sysconfdir}/%{name}.d/
+
+cp %{SOURCE5} $conf_dir/consul.json
+cp %{SOURCE6} $conf_dir/
 
 # Data directories
 mkdir -p %{buildroot}/%{_sharedstatedir}/%{name}
@@ -84,7 +91,7 @@ getent group consul >/dev/null || groupadd -r consul
 # Setting shell for consul user to /sbin/nologin causes script based health checks to fail.
 # See https://github.com/hashicorp/consul/issues/2999
 getent passwd consul >/dev/null || \
-    useradd -r -g consul -d /var/lib/consul -s /bin/sh \
+    useradd -r -g consul -d /var/lib/consul -s /sbin/nologin \
     -c "consul.io user" consul
 exit 0
 
@@ -120,15 +127,16 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %attr(755, root, root) %{_bindir}/consul
-%config(noreplace) %attr(640, root, consul) %{_sysconfdir}/%{name}.d/consul.json
+%config(noreplace) %attr(640, root, consul) $conf_dir/consul.json
 %config(noreplace) %attr(644, root, root) %{_sysconfdir}/logrotate.d/%{name}.conf
 %config(noreplace) %attr(644, root, root) %{_sysconfdir}/rsyslog.d/%{name}.conf
 %config(noreplace) %{_unitdir}/%{name}.service.d/%{name}.env.conf
 
 # Directory for logs. Renders to /var/log/consul
 %dir %attr(750, consul, consul) %{_localstatedir}/log/%{name}
+
 %dir %attr(750, consul, consul) %{_sharedstatedir}/%{name}
-%dir %attr(750, root, consul) %{_sysconfdir}/%{name}.d
+%dir %attr(750, root, consul) $conf_dir
 %{_unitdir}/%{name}.service
 
 %files ui
@@ -138,14 +146,11 @@ rm -rf %{buildroot}
 %doc
 
 %changelog
+* Fri Jul 21 2017 Dev <talk@devghai.com>
+- Removing shell for consul user as v0.9.0 introduces disable-script-checks config.
+
 * Tue May 30 2017 Dev <talk@devghai.com>
 - Updating SystemD service definition to restart on failure.
-
-* Tue May 09 2017 Dev <talk@devghai.com>
-- Adding dependency on logrotate.
-
-* Tue May 09 2017 Dev <talk@devghai.com>
-- Adding dependency on logrotate.
 
 * Tue May 09 2017 Dev <talk@devghai.com>
 - Adding dependency on logrotate.

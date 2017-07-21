@@ -21,7 +21,7 @@ declare -A deps_bin_to_pkg
 deps_bin_to_pkg=(
     ['wget']='wget'
     ['rpmbuild']='rpm-build'
-    ['sha256sum']='coreutils'
+    ['sha256sum']='coreutils' # also needed for sort.
 )
 ###########################################
 # Functions                               #
