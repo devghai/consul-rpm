@@ -21,11 +21,6 @@ BuildRequires:  systemd-units
 Requires:       systemd, logrotate, rsyslog > 7.2
 Requires(pre):  shadow-utils
 
-%package ui
-Summary:        Consul Web UI
-Requires:       consul = %{pkg_version}
-BuildArch:      noarch
-
 %description
 Consul is a tool for service discovery and configuration. Consul is distributed, highly available, and extremely scalable.
 
@@ -34,9 +29,6 @@ Consul provides several key features:
  - Health Checking - Health Checking enables Consul to quickly alert operators about any issues in a cluster. The integration with service discovery prevents routing traffic to unhealthy hosts and enables service level circuit breakers.
  - Key/Value Storage - A flexible key/value store enables storing dynamic configuration, feature flagging, coordination, leader election and more. The simple HTTP API makes it easy to use anywhere.
  - Multi-Datacenter - Consul is built to be datacenter aware, and can support any number of regions without complex configuration.
-
-%description ui
-Consul comes with support for a beautiful, functional web UI. The UI can be used for viewing all services and nodes, viewing all health checks and their current status, and for reading and setting key/value data. The UI automatically supports multi-datacenter.
 
 %prep
 
