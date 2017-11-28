@@ -121,6 +121,9 @@ rm -rf %{buildroot}
 %doc
 
 %changelog
+* Tue Nov 28 2017 Dev <talk@devghai.com>
+- Commenting out CMD_OPTS line in consul.env.conf as consul v1.0.1 fails to start with empty string as an argument.
+
 * Fri Jul 21 2017 Dev <talk@devghai.com>
 - Removing shell for consul user as v0.9.0 introduces disable-script-checks config.
 - Removing separate UI packaging code as 0.9.0 no longer supports it.
